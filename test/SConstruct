@@ -1,0 +1,17 @@
+import os, sys
+import glob
+
+cflags   = '-ggdb -DDEBUG'
+#cflags   = '-ggdb'
+includes = ['../client/c', '../', '../base']
+ldflags  = []
+libpath  = ['../client/c', '../base']
+libs	 = ['m', 'pthread', 'base', 'stdc++']
+
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LINKFLAGS=ldflags, LIBPATH=libpath, LIBS=libs)
+
+files = glob.glob("*.c")
+files.remove('testutil.c')
+for fn in files:
+	name = fn[:-2]
+	env.Program(name, [fn, '../client/c/libmemlink.a'])

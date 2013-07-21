@@ -1,0 +1,50 @@
+import sys, os
+
+#cflags   = '-ggdb -DRANGE_MASK_STR'
+cflags   = '-ggdb -Wall'
+includes = ['.', '../../', '../../base']
+libpath  = ['.', '../../base']
+libs     = ['m', 'pthread']
+comfiles = ['../../serial.c', '../../base/utils.c', '../../base/logfile.c', 
+			'../../base/zzmalloc.c', '../../base/pack.c', '../../base/network.c']
+prgfiles = comfiles + ['memlink_client.c', 'test.c']
+simfiles = comfiles + ['memlink_client.c', 'pingtest.c']
+libfiles = comfiles + ['memlink_client.c'] 
+
+shared_libfiles = []
+static_libfiles = []
+
+if 'debug' in  BUILD_TARGETS:
+    cflags += ' -DDEBUG'
+    BUILD_TARGETS[0] = 'libmemlink.a'
+    if sys.platform.startswith('darwin'):
+        BUILD_TARGETS.append('libmemlink.dylib')
+    else:
+        BUILD_TARGETS.append('libmemlink.so')
+
+    env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+    for fn in libfiles:
+        name = os.path.basename(fn)[:-2]
+        shared_libfiles.append(env.SharedObject('client-shared-' + name, fn))
+        static_libfiles.append(env.Object('client-static-' + name, fn))
+
+    debug = env.StaticLibrary("memlink", static_libfiles)
+    debug = env.SharedLibrary("memlink", shared_libfiles)
+else:
+    cflags += ' -DNOLOG -O2'
+    env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+
+    for fn in libfiles:
+        name = os.path.basename(fn)[:-2]
+        shared_libfiles.append(env.SharedObject('client-shared-' + name, fn))
+        static_libfiles.append(env.Object('client-static-' + name, fn))
+
+    env.StaticLibrary("memlink", static_libfiles)
+    env.SharedLibrary("memlink", shared_libfiles)
+
+
+env2 = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+env2.Program("test", ['test.c', 'libmemlink.a'])
+env2.Program("pingtest", ['pingtest.c', 'libmemlink.a'])
+
+

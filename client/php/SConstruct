@@ -1,0 +1,27 @@
+import sys, os, subprocess
+
+php_config = '/usr/bin/php-config'
+#php_config = '/www/zhaowei/php/bin/php-config'
+
+x = subprocess.Popen(php_config + ' --includes', stdout=subprocess.PIPE, shell=True)
+php_includes = x.stdout.read().strip().split()
+
+os.system('swig -php -o memlink_client_php.c ../c/memlink_client.i')
+
+cflags   = '-ggdb -O2'
+includes = ['.', '../../', '../../base', '../c/'] + php_includes
+libpath  = ['.', '../../base']
+libs	 = ['m']
+files    = ['../../serial.c', '../c/memlink_client.c', '../../base/pack.c',
+			'../../base/utils.c', '../../base/zzmalloc.c', '../../base/logfile.c']
+
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+shared_files = []
+for fn in files:
+    name = os.path.basename(fn)[:-2]
+    shared_files.append(env.SharedObject('client-' + name, fn))
+shared_files.append('memlink_client_php.c')
+
+env.SharedLibrary("cmemlink", shared_files)
+
+Command('cmemlink.so', 'libcmemlink.so', [Move('$TARGET', '$SOURCE'), Copy('cmemlink.php', 'cmemlink_php.php')])

@@ -1,0 +1,17 @@
+import sys, os, copy
+
+cflags   = '-ggdb -Wall'
+includes = ['.', '../base']
+libpath  = ['../base']
+libs     = ['base', 'event', 'm', 'pthread', 'stdc++']
+prgfiles = ['vote.c']
+testfiles = ['test.c']
+
+cflags += ' -O2 -std=gnu99'
+bin = 'vote'
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+vote = env.Program(bin, prgfiles)
+
+testbin = 'test'
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+test = env.Program(testbin, testfiles)

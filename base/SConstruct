@@ -1,0 +1,56 @@
+import sys, os, glob
+
+cflags   = '-ggdb -Wall -std=gnu99'
+defs	 = []
+includes = ['.']
+libpath  = ['.']
+libs     = ['m', 'pthread']
+name     = 'libbase.a'
+libfiles = glob.glob("*.c")
+libtcmalloc = '/usr/local/lib/libtcmalloc_minimal.a'
+usetcmalloc = False
+
+try:
+	Import('debugdefs')
+	defs += debugdefs
+	if 'TCMALLOC' in debugdefs:
+		usetcmalloc = True
+		print '====== base use tcmalloc from parent! ======'
+	else:
+		print '====== base use gun malloc from parent! ======'
+except:
+	if os.path.isfile(libtcmalloc):
+		print '====== base use google tcmalloc! ======'
+		usetcmalloc = True
+		defs.append('TCMALLOC')
+	else:
+		print '====== base use gnu malloc! ======'
+
+if usetcmalloc:
+	#libfiles.append(libtcmalloc)
+	
+	if not os.path.isdir('tcmalloc'):
+		os.system('mkdir tcmalloc')
+	os.system("cp %s tcmalloc" % libtcmalloc)
+	old = os.getcwd()
+	os.chdir('tcmalloc')
+	os.system("ar x %s" % os.path.basename(libtcmalloc))
+	os.chdir(old)
+	libfiles += glob.glob("tcmalloc/*.o")
+
+	libs.append('stdc++')
+
+
+if 'debug' in  BUILD_TARGETS:
+    cflags += ' -DDEBUG -DDEBUGMEM'
+    BUILD_TARGETS[0] = 'libbase.a'
+
+    env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs, CPPDEFINES=defs)
+    debug = env.StaticLibrary(name, libfiles)
+else:
+    cflags += ' -O2'
+    env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs, CPPDEFINES=defs)
+    env.StaticLibrary(name, libfiles)
+
+
+

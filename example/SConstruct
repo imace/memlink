@@ -1,0 +1,19 @@
+import os, sys
+import glob
+
+cflags   = '-ggdb -DDEBUG'
+#cflags   = '-ggdb'
+includes = ['/Developer/usr/include', '../client/c', '../']
+#ldflags  = ['../client/c/libmemlink.a']
+ldflags  = []
+libpath  = ['/Developer/usr/lib', '../client/c']
+libs	 = ['m']
+#libs	 = ['memlink']
+
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LINKFLAGS=ldflags, LIBPATH=libpath, LIBS=libs)
+
+#files = Glob("*.c")
+files = glob.glob("*.c")
+for fn in files:
+	name = fn[:-2]
+	env.Program(name, [fn, '../client/c/libmemlink.so'])

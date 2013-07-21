@@ -1,0 +1,42 @@
+import sys, os, subprocess, glob
+
+#java_home		= '/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0'
+#java_home		= '/usr/java/jdk1.6.0_26'
+#java_home		= '/usr/java/jdk'
+java_home		= '/Library/Java/Home'
+java_includes	= [os.path.join(java_home, 'include'), os.path.join(java_home, 'include/linux')]
+#java_libs		= os.path.join(java_home, 'lib')
+
+os.system('swig -java -package com.googlecode.memlink -o memlink_client_java.c -outdir com/googlecode/memlink ../c/memlink_client.i')
+os.system('python changesrc.py')
+
+cflags   = '-ggdb -fpic'
+includes = ['.', '../../', '../../base', '../c/'] + java_includes
+#libpath  = ['.', '../../base']
+libpath  = ['.']
+libs	 = ['m']
+files    = ['../../serial.c', '../c/memlink_client.c', '../../base/pack.c', '../../base/network.c',
+			'../../base/utils.c', '../../base/zzmalloc.c', '../../base/logfile.c']
+
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LIBPATH=libpath, LIBS=libs)
+shared_files = []
+for fn in files:
+    name = os.path.basename(fn)[:-2]
+    shared_files.append(env.SharedObject('client-' + name, fn))
+shared_files.append('memlink_client_java.c')
+
+env.SharedLibrary("cmemlink", shared_files)
+
+t = Java(target='.', source='com')
+Jar(target="memlink.jar", source=['com'])
+Java(target='.', source='test')
+
+# for clean
+files = glob.glob('com/googlecode/memlink/*.java')
+files += glob.glob('com/googlecode/memlink/*.class')
+files.remove('com/googlecode/memlink/MemLinkClient.java')
+files.append('memlink_client_java.c')
+files += glob.glob("*.class")
+Clean(t, files)
+
+

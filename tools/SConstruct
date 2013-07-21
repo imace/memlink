@@ -1,0 +1,18 @@
+import os, sys, glob
+
+cflags   = '-ggdb -O2'
+includes = ['/Developer/usr/include', '../']
+ldflags  = ['']
+libpath  = ['/Developer/usr/lib']
+libs	 = ['m']
+
+env = Environment(CCFLAGS=cflags, CPPPATH=includes, LINKFLAGS=ldflags, LIBPATH=libpath, LIBS=libs)
+
+files = glob.glob("*.c")
+
+for fn in files:
+	name = fn[:-2]
+	fns = [fn]
+	env.Program(name, fns)
+
+
